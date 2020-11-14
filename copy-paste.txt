@@ -1,0 +1,321 @@
+import java.util.*;
+import java.io.*;
+import java.math.*;
+
+class Point {
+	double x, y;
+	
+	public Point(double x, double y)
+	{
+		this.x = x;
+		this.y = y;
+	}
+	
+	public boolean isTheSame(Point p)
+	{
+		if(p.x == this.x && p.y == this.y)
+			return true;
+		return false;
+	}
+	
+	public String getDirection(Point p)
+	{
+		if(this.x == p.x && this.y < p.y)
+			return "U";
+		else if(this.x > p.x && this.y < p.y)
+			return "UR";
+		else if(this.x > p.x && this.y == p.y)
+			return "R";
+		else if(this.x > p.x && this.y > p.y)
+			return "DR";
+		else if(this.x == p.x && this.y > p.y)
+			return "D";
+		else if(this.x < p.x && this.y > p.y)
+			return "DL";
+		else if(this.x < p.x && this.y == p.y)
+			return "L";
+		return "UL";
+	}
+	
+	public double getDistance(Point p)
+	{
+		return Math.sqrt((p.x-this.x)*(p.x-this.x) + (p.y-this.y)*(p.y-this.y));
+	}
+}
+
+class StraightLine {
+	double m;
+	double b;
+	Point middle;
+	double mPerpendicular;
+	double bPerpendicular;
+	
+	public StraightLine(Point p1, Point p2)
+	{
+		m = (p1.y-p2.y)/(p1.x-p2.x);
+		b = m*p1.x*(-1) + p1.y;
+		middle = new Point(p1.x + (p2.x-p1.x)/2, p1.y + (p2.y-p1.y)/2);
+		mPerpendicular = (1/m)*(-1);
+		bPerpendicular = middle.y - mPerpendicular*middle.x;
+	}
+	
+	public boolean isPotentialSolution(String signal, String dir, Point p)
+	{
+		double x1 = 0;
+		double y1 = bPerpendicular;
+		double x2 = 1;
+		double y2 = mPerpendicular + bPerpendicular;
+		
+		double d = (p.x-x1)*(y2-y1) - (p.y-y1)*(x2-x1);
+		
+		if(dir.equals("UR"))
+		{
+			if(signal.equals("COLDER") && d < 0)
+				return true;
+			else if(signal.equals("WARMER") && d >= 0)
+				return true;
+		}
+		else if(dir.equals("DR")) 
+		{
+			if(signal.equals("COLDER") && d > 0)
+				return true;
+			else if(signal.equals("WARMER") && d <= 0)
+				return true;
+		}
+		else if(dir.equals("DL"))
+		{
+			if(signal.equals("COLDER") && d > 0)
+				return true;
+			else if(signal.equals("WARMER") && d <= 0)
+				return true;
+		}
+		else if(dir.equals("UL")) 
+		{
+			if(signal.equals("COLDER") && d < 0)
+				return true;
+			else if(signal.equals("WARMER") && d >= 0)
+				return true;
+		}
+	
+		return false;
+	}
+}
+
+/**
+ * Auto-generated code below aims at helping you parse
+ * the standard input according to the problem statement.
+ **/
+class Player {
+    private static List<Point> points;
+	private static Point bomb;
+	private static Point pos1, pos2, pos3;
+    private static String bombDir;
+
+    
+    private static Point moreFarAway(Point current)
+	{
+		Point farAway = null;
+		double distance = 0;
+		for(Point p : points)
+		{
+			double auxDistance = current.getDistance(p);
+			if(auxDistance > distance)
+			{
+				distance = auxDistance;
+				farAway = p;
+			}
+		}
+		return farAway;
+	}
+
+
+    private static void reduceSpace(Point current, Point previous)
+	{		
+		List<Point> newPoints = new ArrayList<Point>();
+		
+		String direction = current.getDirection(previous);
+		if(direction.equals("U"))
+		{
+			if(bombDir.equals("COLDER"))
+			{
+				int y = (int)current.y + ((int)previous.y - (int)current.y)/2;
+				
+				for(Point p : points)
+					if(p.y > y)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else if(bombDir.equals("WARMER"))
+			{
+				int y = (int)current.y + ((int)previous.y - (int)current.y)/2;
+				for(Point p : points)
+					if(p.y <= y)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else
+			{
+				for(Point p : points)
+					if(previous.getDistance(p) == current.getDistance(p))
+						newPoints.add(p);
+				points = newPoints;
+			}
+		}
+		else if(direction.equals("R")) 
+		{
+			if(bombDir.equals("COLDER"))
+			{
+				int x = (int)previous.x + ((int)current.x - (int)previous.x)/2;
+				for(Point p : points)
+					if(p.x < x)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else if(bombDir.equals("WARMER"))
+			{
+				int x = (int)previous.x + ((int)current.x - (int)previous.x)/2;
+				for(Point p : points)
+					if(p.x >= x)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else
+			{
+				for(Point p : points)
+					if(previous.getDistance(p) == current.getDistance(p))
+						newPoints.add(p);
+				points = newPoints;
+			}
+		}
+		else if(direction.equals("D")) 
+		{
+			if(bombDir.equals("COLDER"))
+			{
+				int y = (int)previous.y + ((int)current.y - (int)previous.y)/2;
+				for(Point p : points)
+					if(p.y < y)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else if(bombDir.equals("WARMER"))
+			{
+				int y = (int)previous.y + ((int)current.y - (int)previous.y)/2;
+				for(Point p : points)
+					if(p.y >= y)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else
+			{
+				for(Point p : points)
+					if(previous.getDistance(p) == current.getDistance(p))
+						newPoints.add(p);
+				points = newPoints;
+			}
+		}
+		else if(direction.equals("L")) 
+		{
+			if(bombDir.equals("COLDER"))
+			{
+				int x = (int)current.x + ((int)previous.x - (int)current.x)/2;
+				for(Point p : points)
+					if(p.x > x)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else if(bombDir.equals("WARMER"))
+			{
+				int x = (int)current.x + ((int)previous.x - (int)current.x)/2;
+				for(Point p : points)
+					if(p.x <= x)
+						newPoints.add(p);
+				points = newPoints;
+			}
+			else
+			{
+				for(Point p : points)
+					if(previous.getDistance(p) == current.getDistance(p))
+						newPoints.add(p);
+				points = newPoints;
+			}
+		}
+		else
+		{
+			StraightLine sl = new StraightLine(previous, current);
+			if(!bombDir.equals("SAME"))
+			{
+				for(int i = 0; i < points.size(); i++)
+				{
+					if(sl.isPotentialSolution(bombDir, direction, points.get(i)))
+						newPoints.add(points.get(i));
+				}
+				points = newPoints;
+			}
+			else
+			{
+				for(Point p : points)
+					if(previous.getDistance(p) == current.getDistance(p))
+						newPoints.add(p);
+				points = newPoints;
+			}
+				
+		}
+	}
+
+
+    private static void initPoints(int W, int H, Point batman)
+	{
+		for(int i = 0; i < W; i++)
+		{
+			for(int j = 0; j < H; j++)
+			{
+				Point p = new Point(Double.valueOf(i), Double.valueOf(j));
+				if(!batman.isTheSame(p))
+					points.add(p);
+			}
+		}
+	}
+    
+
+    public static void main(String args[]) {
+        Scanner in = new Scanner(System.in);
+        int W = in.nextInt(); // width of the building.
+        int H = in.nextInt(); // height of the building.
+        int N = in.nextInt(); // maximum number of turns before game over.
+        int X0 = in.nextInt();
+        int Y0 = in.nextInt();
+        
+        pos1 = new Point(X0, Y0);
+        points = new ArrayList<Point>();
+        initPoints(W, H, pos1);
+        pos2 = moreFarAway(pos1);
+       
+        points.remove(pos1);
+        points.remove(pos2);
+
+        // game loop
+        while (true) {
+            bombDir = in.next();
+            
+
+            if(pos3 != null)
+        	{
+                reduceSpace(pos2, pos1);
+        		pos1 = pos2;
+        		pos2 = pos3;
+        	}
+
+            System.out.println((int)pos2.x + " " + (int)pos2.y);
+
+
+            if(points.size() > 0)
+        	{
+        		pos3 = moreFarAway(pos2);
+	        	points.remove(pos3);
+        	}
+
+            
+            
+        }
+    }
+}
